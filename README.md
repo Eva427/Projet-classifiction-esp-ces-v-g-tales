@@ -14,3 +14,7 @@ J'ai essayé d'utiliser un gmm tout codé que j'ai trouvé sur internet mais mon
 
 projet_data_extraction : tout sur l'extraction, la construction d'un dictionnaire... 
 tentative gmm : la même chose + tentative de code gmm qui marche pas (en tout cas sur mon ordi)
+
+clustering2.py : réalise le clustering sur le petit jeu de données => à présenter aux profs
+
+clustering_small_data.py : même code que clustering2.py mais réutilisable dans d'autres algos (code mis en forme avec des fonctions)
