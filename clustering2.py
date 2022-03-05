@@ -5,11 +5,12 @@ import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif")
-dataset = dataset.read()
-dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif")
-dataset2 = dataset2.read()
 
+## petit jeu de données :
+dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+dataset = dataset.read()
+dataset2 = dataset2.read()
 
 ##### extraction des classes à partir des probas avec utilisation de kmeans-----------------------------
 nb_class = np.shape(dataset)[0] 
@@ -36,9 +37,8 @@ mat_pre_classif[abs_pixels_ombres, ord_pixels_ombres]=0
     # - n_observations en lignes (ici c'est le nombre de pixels)
     # - n_clusters en colonnes (ici 10)
     # cond on transpose notre matrice 
-kmeans = KMeans(n_clusters=10, random_state=0).fit(dataset[:,abs_pixels_classes, ord_pixels_classes].T) 
-labels = kmeans.labels_ 
-print(labels) #il va falloir vérifier à quel arbre correspond chaque cluster
+kmeans = KMeans(n_clusters=nb_class, random_state=0).fit(dataset[:,abs_pixels_classes, ord_pixels_classes].T) 
+labels = kmeans.labels_  #il va falloir vérifier à quel arbre correspond chaque cluster
 
 
 ##### extraction des classes à partir du fichier fourni dataset2-----------------------------------------
@@ -73,5 +73,3 @@ new_dic_arbres = dict(zip(newkey, dic_arbres.values())) #arbre associé à chaqu
 # pourcentage de réussite de kmeans : 
 reussite_kmeans =  mat_result_kmeans[newkey,range(nb_class)]/np.sum(mat_result_kmeans,axis=0)   
 print(reussite_kmeans)
-
-
