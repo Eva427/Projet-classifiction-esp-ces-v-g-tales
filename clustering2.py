@@ -7,10 +7,16 @@ import matplotlib.pyplot as plt
 
 
 ## petit jeu de données :
-dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+dataset = rasterio.open("./Data/combined_svm_rbf_mean_proba.img") #matrice des probas
+dataset2 = rasterio.open("./Data/combined_svm_rbf.img") #matrice des classes
 dataset = dataset.read()
-dataset2 = dataset2.read()
+dataset2 = dataset2.read()    
+    
+    
+# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
 
 ##### extraction des classes à partir des probas avec utilisation de kmeans-----------------------------
 nb_class = np.shape(dataset)[0] 
@@ -73,3 +79,25 @@ new_dic_arbres = dict(zip(newkey, dic_arbres.values())) #arbre associé à chaqu
 # pourcentage de réussite de kmeans : 
 reussite_kmeans =  mat_result_kmeans[newkey,range(nb_class)]/np.sum(mat_result_kmeans,axis=0)   
 print(reussite_kmeans)
+
+# prédiction des pixels mal classés 
+abs_pixels_apred,ord_pixels_apred = np.where(mat_pre_classif==2)
+prediction = kmeans.predict(dataset[:,abs_pixels_apred, ord_pixels_apred].T)
+
+#comment vérifier le résultat ? Il faudrait reconvertir les clusters fixés par kmeans en leur classe correspondante 
+# dans les numéros des arbres ou l'inverse. 
+# verif = dataset2[0,abs_pixels_apred,ord_pixels_apred]
+# verif2 = np.zeros(np.shape(verif))
+# oldkey = np.array(list(dic_arbres.keys()))
+# for i in range(nb_class):
+#     verif2[verif==oldkey[i]]=newkey[i]
+
+# print(np.where(verif2!=prediction))
+
+# pour la prédiction il faudrait définir un seuil de distance autour des centres des clusters, et si le point prédit 
+# ne tombe pas dans le cluster alors c'est un outlier => chercher comment définir cette distance. 
+
+
+
+
+

@@ -62,7 +62,7 @@ def apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes):
     kmeans = KMeans(n_clusters=nb_class, random_state=0).fit(dataset[:,abs_pixels_classes, ord_pixels_classes].T) 
     labels = kmeans.labels_  #il va falloir vérifier à quel arbre correspond chaque cluster
     clusters = kmeans.cluster_centers_
-    return labels, clusters 
+    return kmeans,labels, clusters 
 
 ##### extraction des classes à partir du fichier fourni dataset2-----------------------------------------
 def extract_classes_connues (dataset2,abs_pixels_classes, ord_pixels_classes, dic_arbres) :
@@ -92,6 +92,12 @@ def eval_kmean(nb_class,mat_result_kmeans,newkey):
     reussite_kmeans =  mat_result_kmeans[newkey,range(nb_class)]/np.sum(mat_result_kmeans,axis=0)   
     return reussite_kmeans
 
+# prédiction des pixels mal classés :
+def predict(mat_pre_classif,kmeans):
+    abs_pixels_apred,ord_pixels_apre = np.where(mat_pre_classif==2)
+    prediction = kmeans.predict(dataset[:,abs_pixels_apred, ord_pixels_apre].T)
+    return abs_pixels_apred,ord_pixels_apre,prediction
+
 ############# test du programme ###################################################
 # mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres = info_pre_classif(dataset,nb_raws,nb_columns)
 # labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
@@ -116,15 +122,14 @@ def test(dataset,dataset2):
     nb_columns = np.shape(dataset)[2]
     
     mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres = info_pre_classif(dataset,nb_raws,nb_columns)
-    labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
+    kmeans,labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
     classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes, dic_arbres) 
     newkey, new_dic_arbres, mat_result_kmeans = map_cluster(nb_class,classes_connues,dic_arbres,labels)
     reussite_kmeans = eval_kmean(nb_class,mat_result_kmeans,newkey)
     
     return labels, clusters, mat_result_kmeans, reussite_kmeans
 
-labels, clusters, mat_result_kmeans, reussite_kmeans = test(dataset,dataset2)
-    
+labels, clusters, mat_result_kmeans, reussite_kmeans = test(dataset,dataset2)   
 
 
 
