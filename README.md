@@ -19,4 +19,6 @@ clustering2.py : réalise le clustering sur le petit jeu de données => à prés
 
 clustering_small_data.py : même code que clustering2.py mais réutilisable dans d'autres algos (code mis en forme avec des fonctions)
 
+clustering_kmeans_v2.py : même code que clustering2.py mais sans la manipulation relou du dico
+
 Lien vers l'overleaf : https://fr.overleaf.com/4173155583tgsvqjsnwzsj
