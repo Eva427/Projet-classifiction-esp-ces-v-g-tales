@@ -6,17 +6,13 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
 
-## petit jeu de données :
-dataset = rasterio.open("./Data/combined_svm_rbf_mean_proba.img") #matrice des probas
-dataset2 = rasterio.open("./Data/combined_svm_rbf.img") #matrice des classes
+## petit jeu de données :    
+#dataset = rasterio.open("./Data/proba_svm_rbf_extract.tif") #matrice des probas
+#dataset2 = rasterio.open("./Data/class_svm_rbf_extract.tif") #matrice des classes
+dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
 dataset = dataset.read()
-dataset2 = dataset2.read()    
-    
-    
-# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
-# dataset = dataset.read()
-# dataset2 = dataset2.read()
+dataset2 = dataset2.read()
 
 ##### extraction des classes à partir des probas avec utilisation de kmeans-----------------------------
 nb_class = np.shape(dataset)[0] 
@@ -58,7 +54,8 @@ dic_arbres = {1: "Platane",
               13: "Melanges_Herbaces",
               14: "Melanges_Arbustifs",
               15: "Renouees_du_Japon",
-              16: "inconnu"}
+              16: "Mais"}
+#17 : marécages
 classes_connues = np.vectorize(dic_arbres.get)(classes_connues) #remplacer les chiffres par les noms 
 
 ##### trouver les correspondances entre les clusters de kmeans et les classes connues---------------------
@@ -69,6 +66,8 @@ mat_result_kmeans = np.zeros((nb_class,nb_class))
 j = 0
 for arbre in dic_arbres.values():
     pos = np.where(classes_connues==arbre)[0]
+    if len(pos) == 0:
+        print(arbre)
     for i in range(nb_class) :
         mat_result_kmeans[i,j] = len(np.where(labels[pos]==i)[0])
     j+=1
@@ -96,8 +95,3 @@ prediction = kmeans.predict(dataset[:,abs_pixels_apred, ord_pixels_apred].T)
 
 # pour la prédiction il faudrait définir un seuil de distance autour des centres des clusters, et si le point prédit 
 # ne tombe pas dans le cluster alors c'est un outlier => chercher comment définir cette distance. 
-
-
-
-
-
