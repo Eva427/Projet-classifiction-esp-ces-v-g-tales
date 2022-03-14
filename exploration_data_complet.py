@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 
 #-- Matrice des proba ----------------------------------------
 ## sélectionner un des deux sets de données ci-dessous
-data_proba = rasterio.open('combined_svm_rbf_mean_proba.img')
-#data_proba = rasterio.open('rlr_l1_combined_mean_proba.img')
+data_proba = rasterio.open('./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img')
+#data_proba = rasterio.open('rlr_l1_combined_mean_proba.img') #autre set
 data_proba = data_proba.read()
 p=np.sum(data_proba,axis=0)
 n=len(np.where(np.where(p!=0))[0]) #repérer les cases qui ne sont pas de l'ombre
@@ -24,14 +24,14 @@ nb_sorted_pixels2 = len(np.where(data_proba>=0.5)[0]) #nb de pixels qui ont ét�
 percent_sorted_pixels = nb_sorted_pixels2/n*100
 
 #-- Matrice des classes --------------------------------------
-datat_class = rasterio.open('combined_svm_rbf.img')
+data_class = rasterio.open('./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img')
 #datat_class = rasterio.open('rlr_l1_combined.img') #autre set
-datat_class = datat_class.read()
+data_class = data_class.read()
 
-keys = list(set(datat_class[np.where(datat_class!=0)])) #repérer les n° des classes (le set sert à avoir une seule occurence)
+keys = np.array(np.unique(data_class[np.where(data_class!=0)]),dtype='int') #repérer les n° des classes (le set sert à avoir une seule occurence)
 classes = dict() #va contenir les effectifs par classe
 for i in keys :
-    classes[i] = len(np.where(datat_class==i)[0])
+    classes[i] = len(np.where(data_class==i)[0])
 plt.figure()
 plt.bar(classes.keys(), classes.values(), color='g')
 plt.title("effectifs par classe")
