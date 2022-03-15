@@ -1,41 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar  9 18:34:39 2022
+Created on Tue Mar 15 11:10:24 2022
 
 @author: julie
+-Rq : Meme code que dans clustering_small_data mais en enlevant le dictionnaire => plus facile à manipuler
 """
-### Meme code que dans clustering_small_data mais en enlevant le dictionnaire => plus facle à manipuler.
 
 import rasterio 
 import rasterio.features 
 import rasterio.warp 
 import numpy as np 
 from sklearn.cluster import KMeans
+import rule_select_training_data as RSTD 
+
+##### EXTRACTION DES DONNEES :
 
 ## petit jeu de données :
-dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
+
+## gros jeu de données  lrl : 
+# dataset = rasterio.open("./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img") #matrice des probas
+# dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
+
+## gros jeu de données  svm : 
+dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
+dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
 dataset = dataset.read()
 dataset2 = dataset2.read()
 
-def info_pre_classif(dataset,nb_raws,nb_columns) :
-    mat_pre_classif = 2*np.ones((nb_raws,nb_columns)) 
-    ##  mat_pre_classif : matrice qui contient des int indiquant le niveau de classification de la matrice d'origine :
-        # 0 = pixel d'ombre
-        # 1 = pixel bien classé (avec une proba > 0.5) => va constituer l'échantillon de tests
-        # 2 = pixel mal classé (avec une proba < 0.5) qu'il faudra prédire
-    # on commence par une matrice remplie de 2 => les pixels mal classés sont ainsi rentrés par défaut
-    #### En fait cette matrice m'a pas servi pour le moment mais elle servira par la suite pour repérer les indices des arbres à prédire je pense
-    
-    #Repérer les indices des pixels bien classés et des zones d'ombres : 
-    _, abs_pixels_classes, ord_pixels_classes = np.where(dataset[:,:,:]>0.5) #pixels bien classés
-    somme_10mat = np.sum(dataset,axis=0) #somme des 10 matrices de proba => là où la somme fait 0 on a des vecteurs d'ombre
-    abs_pixels_ombres, ord_pixels_ombres = np.where(somme_10mat==0) #pixels d'ombre
-    
-    mat_pre_classif[abs_pixels_classes, ord_pixels_classes]=1
-    mat_pre_classif[abs_pixels_ombres, ord_pixels_ombres]=0
-    return mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres
 
 ##### extraction des classes à partir des probas avec utilisation de kmeans-----------------------------
 def apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes):
@@ -94,7 +92,7 @@ def test(dataset,dataset2):
     nb_raws = np.shape(dataset)[1] 
     nb_columns = np.shape(dataset)[2]
     
-    mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres = info_pre_classif(dataset,nb_raws,nb_columns)
+    mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = RSTD.info_pre_classif(dataset,nb_raws,nb_columns,RSTD.rule05)
     kmeans,labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
     classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
     newclass, mat_result_kmeans = map_cluster(nb_class,classes_connues,labels)
