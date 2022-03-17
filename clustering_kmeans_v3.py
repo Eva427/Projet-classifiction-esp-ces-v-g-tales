@@ -31,10 +31,10 @@ import rule_select_training_data as RSTD
 #*******************************************************************************************************
 
 ## petit jeu de données :
-dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
-dataset = dataset.read()
-dataset2 = dataset2.read()
+# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
 
 ## gros jeu de données  lrl : 
 # dataset = rasterio.open("./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img") #matrice des probas
@@ -43,10 +43,10 @@ dataset2 = dataset2.read()
 # dataset2 = dataset2.read()
 
 ## gros jeu de données  svm : 
-# dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
-# dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
-# dataset = dataset.read()
-# dataset2 = dataset2.read()
+dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
+dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
+dataset = dataset.read()
+dataset2 = dataset2.read()
 
 dic_arbres = {1: "Platane",
               2: "Saule",
@@ -206,6 +206,7 @@ def plot_resultat_classif(dataset,dic_arbres):
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
     plt.show()
+    plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
 
 ##### Graphique des résultats de l'algorithme de Clustering & Rejet--------------------------------------
 def plot_resultat_cluster(mat_cluster,nb_class):
@@ -243,6 +244,7 @@ def plot_resultat_cluster(mat_cluster,nb_class):
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
     plt.show()
+    plt.savefig('Classes_clustering.png', dpi=600, bbox_inches='tight')
 
 
 #*******************************************************************************************************
