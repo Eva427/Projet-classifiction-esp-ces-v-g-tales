@@ -84,14 +84,14 @@ def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
 
 
 #### TESTS DU PROGRAMME : ################################################################
-nb_raws = np.shape(dataset)[1] 
-nb_columns = np.shape(dataset)[2]
+# nb_raws = np.shape(dataset)[1] 
+# nb_columns = np.shape(dataset)[2]
 
 ### test règle 0.5: 
-mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = info_pre_classif(dataset,nb_raws,nb_columns,rule05)
+#mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = info_pre_classif(dataset,nb_raws,nb_columns,rule05)
 
 ### test règle 0.5 +  diff : 
-diff = 0.1
-mat_pre_classif2, abs_pixels_classes2, ord_pixels_classes2, abs_pixels_ombres2, ord_pixels_ombres2, abs_nonclass2, ord_nonclass2 = info_pre_classif(dataset,nb_raws,nb_columns,rule05_ecartProbas,diff)
+#diff = 0.1
+#mat_pre_classif2, abs_pixels_classes2, ord_pixels_classes2, abs_pixels_ombres2, ord_pixels_ombres2, abs_nonclass2, ord_nonclass2 = info_pre_classif(dataset,nb_raws,nb_columns,rule05_ecartProbas,diff)
 
 
