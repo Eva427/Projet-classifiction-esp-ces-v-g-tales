@@ -31,10 +31,10 @@ import rule_select_training_data as RSTD
 #*******************************************************************************************************
 
 ## petit jeu de données :
-# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
-# dataset = dataset.read()
-# dataset2 = dataset2.read()
+dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+dataset = dataset.read()
+dataset2 = dataset2.read()
 
 ## gros jeu de données  lrl : 
 # dataset = rasterio.open("./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img") #matrice des probas
@@ -43,10 +43,10 @@ import rule_select_training_data as RSTD
 # dataset2 = dataset2.read()
 
 ## gros jeu de données  svm : 
-dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
-dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
-dataset = dataset.read()
-dataset2 = dataset2.read()
+# dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
+# dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
 
 dic_arbres = {1: "Platane",
               2: "Saule",
@@ -93,7 +93,6 @@ def map_cluster(nb_class,classes_connues,labels) :
         for i in range(nb_class) :
             mat_result_kmeans[i,j] = len(np.where(labels[pos]==i)[0])
         j+=1
-
     newclass = np.argmax(mat_result_kmeans, axis=0) #n° classes qui sont les plus associées à chaque arbre
     return newclass,mat_result_kmeans
 
@@ -112,9 +111,7 @@ def predict(mat_pre_classif,kmeans):
 def matrice_cluster(labels,nb_raws,nb_columns,abs_pixels_classes,ord_pixels_classes) :
     # matrice_cluster associe à chaque pixel bien classé le cluster obtenu    
     mat_cluster = (-1)*np.ones((nb_raws,nb_columns)) #-1 = pas de cluster associé à ce pixel
-    
-    for i in range(len(abs_pixels_classes)):
-        mat_cluster[abs_pixels_classes[i],ord_pixels_classes[i]] = labels[i]          
+    mat_cluster[abs_pixels_classes,ord_pixels_classes] = labels       
     return mat_cluster
 
 ##### définition des fonctions pour le rejet-------------------------------------------------------------- 
@@ -134,7 +131,6 @@ def calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class):
     for k in range(nb_class): 
         abs_points_cluster,ord_points_cluster = np.where(mat_cluster == k) #coordonées des points associés au cluster k
         data_cluster_k = dataset[:,abs_points_cluster,ord_points_cluster] #points de dataset associés au cluster k    
-        
         # distance_to_center_k est une matrice contenant les distances de chaque point au centre du cluster k :
         distance_to_center_k = np.zeros(np.shape(data_cluster_k)[1]) 
         for i in range(np.shape(data_cluster_k)[1]): #pour chaque donnée i du cluster k...
@@ -173,80 +169,64 @@ def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_
 
 
 #*******************************************************************************************************
-###### DEFINITION DES GRAPHIQUES :
+###### TRACER LES CARTES :
 #*******************************************************************************************************
 
-##### Graphique des résultats de l'algorithme de classification------------------------------------------
-def plot_resultat_classif(dataset,dic_arbres):
+## fonction pour avoir les mêmes numéros associés aux clusters et aux arbres du jeu ded données datset2
+## + l'ombre est mise à -1 et le rejet à -2
+def map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class):
+    mat_copy = np.copy(mat_cluster)
+    num_classes = np.array(np.unique(classes_connues),dtype=int) #n° originla des espèces d'arbre
+    #map les numéros des classes aux numéros des clusters
+    for i in range(nb_class):
+        pos = np.where(mat_cluster==newclass[i])
+        mat_copy[pos] = num_classes[i]
+    #ajout classe rejet et ombre
+    mat_copy[np.where(mat_cluster==val_ombre)] = -1
+    mat_copy[np.where(mat_cluster==val_rejet)] = -2
+    return mat_copy
+
+## fonction pour plot la matrice obtenue (dans les mêmes couleurs pour la matrice des clusters détermniés 
+## par l'algo et pour la matrice des classes de dataset2)
+def plot_map_matrice(dataset,dic_arbres,nb_class,title):
     #VERIFIER AVEC QGIS QUE LA LEGENDE EST BIEN ASSOCIEE AUX BONS ARBRES !!  
+    
+    #pour la légende au graphe :
+    values = list(dic_arbres.keys())
+    names = list(dic_arbres.values())
     
     ### définition de la map de couleur :
     #------ les valeurs dans dataset ne se suivent pas, elles valent : [1,2,3,4,7,9,13,14,15,16] 
     #------ donc on ajoute 4 fois la même couleur entre la classe 9 et 13 par exemple pour pallier à ce pb
-    cmap2 = colors.ListedColormap(['black','gold','saddlebrown','green','blueviolet','blueviolet','blueviolet',
+    color_list= ['red','black','black','gold','saddlebrown','green','blueviolet','blueviolet','blueviolet',
                                    'skyblue', 'skyblue','chartreuse','chartreuse','chartreuse','chartreuse',
-                                   'lightpink','darkgrey','royalblue','ivory'])
+                                   'lightpink','darkgrey','royalblue','ivory']
+    if len(np.unique(dataset)) == nb_class+1 : #si c'est une image sans le rejet
+        cmap2 = colors.ListedColormap(color_list[2:])
+        values = np.insert(values,0,-1) #ajoute la classe d'ombre (valeur -1)
+        names = np.insert(names,0,'0mbre') #ajoute la classe d'ombre
+    else : #si c'est une image avec le rejet
+        cmap2 = colors.ListedColormap(color_list)
+        values = np.insert(values,0,-1) #ajoute la classe d'ombre (valeur -1)
+        values = np.insert(values,0,-2) #ajoute la classe de rejet (valeur -2)
+        names = np.insert(names,0,'0mbre') #ajoute la classe d'ombre
+        names = np.insert(names,0,'Rejet') #ajoute la classe de rejet
+            
     
     ### tracé du graphe : 
     plt.figure(figsize=(15,15))
-    im = plt.imshow(dataset2[0,:,:],cmap = cmap2)
-    plt.title ("Classes déterminiées par l'algorithme de classification")
+    im = plt.imshow(dataset,cmap = cmap2)
+    plt.title (title)
     #plt.colorbar() #barre de couleurs
-    
-    #### ajout de la légende au graphe :
-    #------ définition des lables : sépare le dictionnaire en 2 listes car + facile pour la légende
-    values = list(dic_arbres.keys())
-    values = np.insert(values,0,-1) #ajoute la classe d'ombre (valeur -1)
-    names = list(dic_arbres.values())
-    names = np.insert(names,0,'0mbre') #ajoute la classe d'ombre
     #------ get the colors of the values, according to the colormap used by imshow
     couleur = [im.cmap(im.norm(value)) for value in values]
     #------ put those patched as legend-handles into the legend
     patches = [ mpatches.Patch(color=couleur[i], label= names[i]) for i in range(len(values)) ]
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
+    #plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
     plt.show()
-    plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
-
-##### Graphique des résultats de l'algorithme de Clustering & Rejet--------------------------------------
-def plot_resultat_cluster(mat_cluster,nb_class):
-    #Cette procédure trace les résultats du clustering et du rejet  
     
-    ### définition de la map de couleur :
-    #------ les valeurs dans mat_cluster se suivent, elles valent : [-1,-2,0,1,2,3,4,5,6,7,9] 
-    #------ on ne double donc pas les couleurs.
-    cmap2 = colors.ListedColormap(['red','black','gold','saddlebrown','green','blueviolet',
-                                   'skyblue','chartreuse',
-                                   'lightpink','darkgrey','royalblue','ivory'])
-    
-    ### tracé du graphe : 
-    plt.figure(figsize=(15,15))
-    im2 = plt.imshow(mat_cluster,cmap = cmap2)
-    plt.title ("Classes déterminées par le clustering avec rejet")
-    
-    #### ajout de la légende au graphe :
-    #------ définition des labels  
-    values_cluster = list(np.arange(0,10)) #10 clusters
-    values_cluster.append(-1) #ajout de la classe ombre
-    values_cluster.append(-2) #ajout de la classe rejet
-    names_cluster = []   
-    
-    for i in range(nb_class): # on attribue un nom aux 10 clusters
-        names_cluster.append("Cluster {l}".format(l=i)) 
-        
-    names_cluster.append("Ombre") #nom de la classe ombre
-    names_cluster.append("Rejet") #nom de la classe rejet
-    
-    #------ get the colors of the values, according to the colormap used by imshow
-    couleur = [im2.cmap(im2.norm(value)) for value in values_cluster]
-    #------ put those patched as legend-handles into the legend
-    patches = [mpatches.Patch(color=couleur[i], label= names_cluster[i]) for i in range(len(values_cluster)) ]
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
-    plt.grid(True)
-    plt.show()
-    plt.savefig('Classes_clustering.png', dpi=600, bbox_inches='tight')
-
-
 #*******************************************************************************************************
 ##### TEST DU PROGRAMME
 #*******************************************************************************************************
@@ -260,7 +240,8 @@ def test(dataset,dataset2):
     nb_class = np.shape(dataset)[0] 
     nb_raws = np.shape(dataset)[1] 
     nb_columns = np.shape(dataset)[2]
-    
+    val_ombre = -1
+    val_rejet = -2
     
     #### Renormalisation des données avant d'appliquer le clustering
     """
@@ -285,15 +266,15 @@ def test(dataset,dataset2):
     mesure = wasserstein
     rayons = calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class)
     mat_cluster =  rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
-    
+    mat_cluster = map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class)
     
     return labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster
 
 
 labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,dataset2)   
 
-# Tracés des graphiques
+# # Tracés des graphiques
 nb_class = np.shape(dataset)[0] 
+plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification log reg l1")
+plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminiées par l'algorithme Kmeans log reg l1")
 
-plot_resultat_classif(dataset,dic_arbres)
-plot_resultat_cluster(mat_cluster,nb_class)
