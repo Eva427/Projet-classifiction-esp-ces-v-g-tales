@@ -31,10 +31,10 @@ import rule_select_training_data as RSTD
 #*******************************************************************************************************
 
 ## petit jeu de données :
-dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
-dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
-dataset = dataset.read()
-dataset2 = dataset2.read()
+# dataset = rasterio.open("./Data/proba_log_reg_l1_extract.tif") #matrice des probas
+# dataset2 = rasterio.open("./Data/class_log_reg_l1_extract.tif") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
 
 ## gros jeu de données  lrl : 
 # dataset = rasterio.open("./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img") #matrice des probas
@@ -43,10 +43,10 @@ dataset2 = dataset2.read()
 # dataset2 = dataset2.read()
 
 ## gros jeu de données  svm : 
-# dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
-# dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
-# dataset = dataset.read()
-# dataset2 = dataset2.read()
+dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
+dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
+dataset = dataset.read()
+dataset2 = dataset2.read()
 
 dic_arbres = {1: "Platane",
               2: "Saule",
@@ -152,7 +152,7 @@ def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_
     abs_data_rejet = [] #abscisses et ordonnées des data rejetées. 
     ord_data_rejet = []
     
-    T = 0.7 #seuil de rejet à calibrer (se rapporte à 2*sigma ou 3*sigma)
+    T = 0.9 #seuil de rejet à calibrer (se rapporte à 2*sigma ou 3*sigma)
         
     for i in range(np.shape(abs_nonclass)[0]) : #pour chaque donnée non classée...
         for k in range(nb_class): #...on calcule sa distance au centre de chaque cluster
@@ -224,7 +224,10 @@ def plot_map_matrice(dataset,dic_arbres,nb_class,title):
     patches = [ mpatches.Patch(color=couleur[i], label= names[i]) for i in range(len(values)) ]
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
-    #plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
+    if len(np.unique(dataset)) == nb_class+1 : 
+        plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
+    else :
+        plt.savefig('Classes_clustering.png', dpi=600, bbox_inches='tight')
     plt.show()
     
 #*******************************************************************************************************
@@ -275,6 +278,6 @@ labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,
 
 # # Tracés des graphiques
 nb_class = np.shape(dataset)[0] 
-plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification log reg l1")
-plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminiées par l'algorithme Kmeans log reg l1")
+plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification svm")
+plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
 
