@@ -21,4 +21,14 @@ clustering_small_data.py : même code que clustering2.py mais réutilisable dans
 
 clustering_kmeans_v2.py : même code que clustering2.py mais sans la manipulation relou du dico
 
+TO DO LIST : 
+- comparer les 10 itérations (demande des profs)
+- extraire les caches (données réelles) et voir comment s'en servir pour vérifier les résultats 
+- réfléchir à la prise en compte du contexte
+- comparer les résultats obtenus avec les différentes règles de classification pour la construction du set d'entrainement
+- évaluation des algos, on peut calculer différentes choses : le nombre de pixels rejetés, le ratio nombre_rejets/nombre_pixels_apredire, NMI (normalized Mutual Information)
+- trouver comment fixer un rayon qui prenne en compte la variance
+- tester plusieurs seuils T sur kmeans 
+
+------------------------------------------------------------------------------------------------------------------------------------------ 
 Lien vers l'overleaf : https://fr.overleaf.com/4173155583tgsvqjsnwzsj
