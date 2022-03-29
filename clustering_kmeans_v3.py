@@ -24,6 +24,7 @@ import matplotlib.patches as mpatches
 
 #importation d'autres codes
 import rule_select_training_data as RSTD 
+import file_data_rasterio as FDR 
 
 
 #*******************************************************************************************************
@@ -43,10 +44,10 @@ import rule_select_training_data as RSTD
 # dataset2 = dataset2.read()
 
 ## gros jeu de données  svm : 
-dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
-dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
-dataset = dataset.read()
-dataset2 = dataset2.read()
+# dataset = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img") #matrice des probas
+# dataset2 = rasterio.open("./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img") #matrice des classes
+# dataset = dataset.read()
+# dataset2 = dataset2.read()
 
 dic_arbres = {1: "Platane",
               2: "Saule",
@@ -126,8 +127,7 @@ def calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class):
     # calcule le rayon de chaque cluster en utilisant la mesure entrée en argument
     # rayon du cluster k = distance entre le centre du clusteur k et le point le + éloigné du cluster k
     # kmeans suppose que les clusters sont sphériques. 
-    rayons = np.zeros(nb_class)
-        
+    rayons = np.zeros(nb_class)   
     for k in range(nb_class): 
         abs_points_cluster,ord_points_cluster = np.where(mat_cluster == k) #coordonées des points associés au cluster k
         data_cluster_k = dataset[:,abs_points_cluster,ord_points_cluster] #points de dataset associés au cluster k    
@@ -271,13 +271,24 @@ def test(dataset,dataset2):
     mat_cluster =  rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
     mat_cluster = map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class)
     
+    
     return labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster
 
+#extraction des data
+path_dataset = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img"
+path_dataset2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img"
+dataset,meta,dataset2,meta2 = FDR.extract_data(path_dataset, path_dataset2)
 
-labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,dataset2)   
+#appel du programme de test
+labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,dataset2)
 
-# # Tracés des graphiques
+#exportation de l'images résultat en rasterio
+nb_raws = np.shape(dataset)[1] 
+nb_columns = np.shape(dataset)[2] 
+path_img="path_img3"
+FDR.save_img(mat_cluster,path_img,meta,nb_raws,nb_columns)
+
+#Tracés des graphiques
 nb_class = np.shape(dataset)[0] 
 plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification svm")
 plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
-
