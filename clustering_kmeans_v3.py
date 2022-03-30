@@ -167,7 +167,31 @@ def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_
     mat_cluster[abs_data_rejet,ord_data_rejet] = -2 #pixels rejetés
     return mat_cluster
 
-
+def extract_rejet(mat_cluster,path_img,meta,nb_raws,nb_columns,title) :
+    ### Calcul matrice rejet et extraction sur rasterio : --------------------
+    mat_rejet = np.zeros((nb_raws,nb_columns))
+    abs_data_rejet,ord_data_rejet = np.where(mat_cluster==-2)
+    mat_rejet[abs_data_rejet,ord_data_rejet]=-2
+    FDR.save_img(mat_rejet,path_img,meta,nb_raws,nb_columns)
+    
+    ### Plot de la carte de rejet : -------------------------------------------
+    cmap2 = colors.ListedColormap(['red','red','white']) # définition map de couleur
+    
+    ### tracé du graphe :
+    plt.figure(figsize=(15,15))
+    im = plt.imshow(mat_rejet,cmap = cmap2)
+    plt.title (title)
+    
+    #légende du graphe
+    values = [-2, 0] 
+    names = ["rejet","non rejeté"]
+    couleur = [im.cmap(im.norm(value)) for value in values]
+    patches = [ mpatches.Patch(color=couleur[i], label= names[i]) for i in range(len(values)) ]
+    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
+    plt.grid(True)
+    plt.savefig(path_img, dpi=600, bbox_inches='tight')
+    plt.show()
+    return mat_rejet 
 #*******************************************************************************************************
 ###### TRACER LES CARTES :
 #*******************************************************************************************************
@@ -275,8 +299,15 @@ def test(dataset,dataset2):
     return labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster
 
 #extraction des data
+#petit jeu de données :
+# path_dataset = "./Data/proba_log_reg_l1_extract.tif" #matrice des probas
+# path_dataset2 = "./Data/class_log_reg_l1_extract.tif" #matrice des classes
+
+#gros jeu de données Log_reg_l1
 path_dataset = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img"
 path_dataset2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img"
+
+
 dataset,meta,dataset2,meta2 = FDR.extract_data(path_dataset, path_dataset2)
 
 #appel du programme de test
@@ -292,3 +323,6 @@ FDR.save_img(mat_cluster,path_img,meta,nb_raws,nb_columns)
 nb_class = np.shape(dataset)[0] 
 plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification svm")
 plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
+
+path_rejet="img_rejet"
+mat_rejet = extract_rejet(mat_cluster,path_rejet,meta,nb_raws,nb_columns,"rejet kmeans seuil T09")
