@@ -142,16 +142,16 @@ def info_pre_classifbis(data1, data2, class1, class2,nb_raws,nb_columns,rule,cho
 
 
 #### TESTS DU PROGRAMME : ################################################################
-nb_raws = np.shape(datasetrbf)[1] 
-nb_columns = np.shape(datasetrbf)[2]
+# nb_raws = np.shape(datasetrbf)[1] 
+# nb_columns = np.shape(datasetrbf)[2]
 
-### test règle 0.5: 
-mat_pre_classifrbf, abs_pixels_classesrbf, ord_pixels_classesrbf, abs_pixels_ombres, ord_pixels_ombres, abs_nonclassrbf, ord_nonclassrbf = info_pre_classif(datasetrbf,nb_raws,nb_columns,rule05)
-mat_pre_classifsvm, abs_pixels_classessvm, ord_pixels_classessvm, abs_pixels_ombres, ord_pixels_ombres, abs_nonclasssvm, ord_nonclasssvm = info_pre_classif(datasetsvm,nb_raws,nb_columns,rule05)
+# ### test règle 0.5: 
+# mat_pre_classifrbf, abs_pixels_classesrbf, ord_pixels_classesrbf, abs_pixels_ombres, ord_pixels_ombres, abs_nonclassrbf, ord_nonclassrbf = info_pre_classif(datasetrbf,nb_raws,nb_columns,rule05)
+# mat_pre_classifsvm, abs_pixels_classessvm, ord_pixels_classessvm, abs_pixels_ombres, ord_pixels_ombres, abs_nonclasssvm, ord_nonclasssvm = info_pre_classif(datasetsvm,nb_raws,nb_columns,rule05)
 
-### test règle 0.5 +  diff : 
-diff = 0.1
-mat_pre_classif2rbf, abs_pixels_classes2rbf, ord_pixels_classes2rbf, abs_pixels_ombres2rbf, ord_pixels_ombres2rbf, abs_nonclass2rbf, ord_nonclass2rbf = info_pre_classif(datasetrbf,nb_raws,nb_columns,rule05_ecartProbas,diff)
+# ### test règle 0.5 +  diff : 
+# diff = 0.1
+# mat_pre_classif2rbf, abs_pixels_classes2rbf, ord_pixels_classes2rbf, abs_pixels_ombres2rbf, ord_pixels_ombres2rbf, abs_nonclass2rbf, ord_nonclass2rbf = info_pre_classif(datasetrbf,nb_raws,nb_columns,rule05_ecartProbas,diff)
 
 
-mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass=info_pre_classifbis( datasetrbf, datasetsvm, dataset2rbf, dataset2svm,nb_raws,nb_columns,rule05_ecartProbas) 
+# mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass=info_pre_classifbis( datasetrbf, datasetsvm, dataset2rbf, dataset2svm,nb_raws,nb_columns,rule05_ecartProbas) 
