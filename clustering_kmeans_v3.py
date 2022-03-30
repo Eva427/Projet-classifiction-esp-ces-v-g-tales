@@ -171,6 +171,7 @@ def extract_rejet(mat_cluster,path_img,meta,nb_raws,nb_columns,title) :
     ### Calcul matrice rejet et extraction sur rasterio : --------------------
     mat_rejet = np.zeros((nb_raws,nb_columns))
     abs_data_rejet,ord_data_rejet = np.where(mat_cluster==-2)
+    nb_pixels_rejetes = len(abs_data_rejet)
     mat_rejet[abs_data_rejet,ord_data_rejet]=-2
     FDR.save_img(mat_rejet,path_img,meta,nb_raws,nb_columns)
     
@@ -191,7 +192,7 @@ def extract_rejet(mat_cluster,path_img,meta,nb_raws,nb_columns,title) :
     plt.grid(True)
     plt.savefig(path_img, dpi=600, bbox_inches='tight')
     plt.show()
-    return mat_rejet 
+    return mat_rejet,nb_pixels_rejetes
 #*******************************************************************************************************
 ###### TRACER LES CARTES :
 #*******************************************************************************************************
@@ -325,4 +326,4 @@ plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par
 plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
 
 path_rejet="img_rejet"
-mat_rejet = extract_rejet(mat_cluster,path_rejet,meta,nb_raws,nb_columns,"rejet kmeans seuil T09")
+mat_rejet,nb_pixels_rejetes = extract_rejet(mat_cluster,path_rejet,meta,nb_raws,nb_columns,"rejet kmeans seuil T09")
