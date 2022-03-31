@@ -29,6 +29,6 @@ TO DO LIST :
 - évaluation des algos, on peut calculer différentes choses : le nombre de pixels rejetés, le ratio nombre_rejets/nombre_pixels_apredire, NMI (normalized Mutual Information)
 - trouver comment fixer un rayon qui prenne en compte la variance
 - tester plusieurs seuils T sur kmeans 
-
+- extraire les données du set d'entraînement et les plot
 ------------------------------------------------------------------------------------------------------------------------------------------ 
 Lien vers l'overleaf : https://fr.overleaf.com/4173155583tgsvqjsnwzsj
