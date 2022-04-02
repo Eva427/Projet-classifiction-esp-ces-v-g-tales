@@ -109,9 +109,9 @@ def predict(mat_pre_classif,kmeans):
     return abs_pixels_apred,ord_pixels_apred,prediction
 
 ##### création d'une matrice contenant le résultat du clustering------------------------------------------ 
-def matrice_cluster(labels,nb_raws,nb_columns,abs_pixels_classes,ord_pixels_classes) :
+def matrice_cluster(labels,nb_rows,nb_columns,abs_pixels_classes,ord_pixels_classes) :
     # matrice_cluster associe à chaque pixel bien classé le cluster obtenu    
-    mat_cluster = (-1)*np.ones((nb_raws,nb_columns)) #-1 = pas de cluster associé à ce pixel
+    mat_cluster = (-1)*np.ones((nb_rows,nb_columns)) #-1 = pas de cluster associé à ce pixel
     mat_cluster[abs_pixels_classes,ord_pixels_classes] = labels       
     return mat_cluster
 
@@ -167,13 +167,13 @@ def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_
     mat_cluster[abs_data_rejet,ord_data_rejet] = -2 #pixels rejetés
     return mat_cluster
 
-def extract_rejet(mat_cluster,path_img,meta,nb_raws,nb_columns,title) :
+def extract_rejet(mat_cluster,path_img,meta,nb_rows,nb_columns,title) :
     ### Calcul matrice rejet et extraction sur rasterio : --------------------
-    mat_rejet = np.zeros((nb_raws,nb_columns))
+    mat_rejet = np.zeros((nb_rows,nb_columns))
     abs_data_rejet,ord_data_rejet = np.where(mat_cluster==-2)
     nb_pixels_rejetes = len(abs_data_rejet)
     mat_rejet[abs_data_rejet,ord_data_rejet]=-2
-    FDR.save_img(mat_rejet,path_img,meta,nb_raws,nb_columns)
+    FDR.save_img(mat_rejet,path_img,meta,nb_rows,nb_columns)
     
     ### Plot de la carte de rejet : -------------------------------------------
     cmap2 = colors.ListedColormap(['red','red','white']) # définition map de couleur
@@ -258,7 +258,7 @@ def plot_map_matrice(dataset,dic_arbres,nb_class,title):
 #*******************************************************************************************************
 ##### TEST DU PROGRAMME
 #*******************************************************************************************************
-# mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres = info_pre_classif(dataset,nb_raws,nb_columns)
+# mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres = info_pre_classif(dataset,nb_rows,nb_columns)
 # labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
 # classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
 # newkey, mat_result_kmeans = map_cluster(nb_class,classes_connues,dic_arbres,labels)
@@ -266,7 +266,7 @@ def plot_map_matrice(dataset,dic_arbres,nb_class,title):
 
 def test(dataset,dataset2):
     nb_class = np.shape(dataset)[0] 
-    nb_raws = np.shape(dataset)[1] 
+    nb_rows = np.shape(dataset)[1] 
     nb_columns = np.shape(dataset)[2]
     val_ombre = -1
     val_rejet = -2
@@ -283,14 +283,14 @@ def test(dataset,dataset2):
     """
     
     #### Appel du clustering 
-    mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = RSTD.info_pre_classif(dataset,nb_raws,nb_columns,RSTD.rule05)
+    mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = RSTD.info_pre_classif(dataset,nb_rows,nb_columns,RSTD.rule05)
     kmeans,labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
     classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
     newclass, mat_result_kmeans = map_cluster(nb_class,classes_connues,labels)
     reussite_kmeans = eval_kmean(nb_class,mat_result_kmeans,newclass)
     
     #### Appel du rejet 
-    mat_cluster = matrice_cluster(labels,nb_raws,nb_columns,abs_pixels_classes,ord_pixels_classes)
+    mat_cluster = matrice_cluster(labels,nb_rows,nb_columns,abs_pixels_classes,ord_pixels_classes)
     mesure = wasserstein
     rayons = calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class)
     mat_cluster =  rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
@@ -314,16 +314,16 @@ dataset,meta,dataset2,meta2 = FDR.extract_data(path_dataset, path_dataset2)
 #appel du programme de test
 labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,dataset2)
 
-#exportation de l'images résultat en rasterio
-nb_raws = np.shape(dataset)[1] 
+#exportation de l'image résultat en rasterio
+nb_rows = np.shape(dataset)[1] 
 nb_columns = np.shape(dataset)[2] 
-path_img="path_img3"
-FDR.save_img(mat_cluster,path_img,meta,nb_raws,nb_columns)
+path_img="mat_cluster_lrl1"
+FDR.save_img(mat_cluster,path_img,meta,nb_rows,nb_columns)
 
 #Tracés des graphiques
 nb_class = np.shape(dataset)[0] 
 plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification svm")
 plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
 
-path_rejet="img_rejet"
-mat_rejet,nb_pixels_rejetes = extract_rejet(mat_cluster,path_rejet,meta,nb_raws,nb_columns,"rejet kmeans seuil T09")
+path_rejet="img_rejet_lrl1"
+mat_rejet,nb_pixels_rejetes = extract_rejet(mat_cluster,path_rejet,meta,nb_rows,nb_columns,"rejet kmeans seuil T09")
