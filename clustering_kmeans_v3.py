@@ -87,7 +87,7 @@ def extract_classes_connues (dataset2,abs_pixels_classes, ord_pixels_classes) :
 
 def map_cluster(nb_class,classes_connues,labels) :
     mat_result_kmeans = np.zeros((nb_class,nb_class))
-    num_classes = np.array(np.unique(classes_connues),dtype=int) #n° originla des espèces d'arbre
+    num_classes = np.array(np.unique(classes_connues),dtype=int) #n° original des espèces d'arbre
     j = 0
     for num in num_classes:
         pos = np.where(classes_connues==num)[0]
@@ -97,10 +97,11 @@ def map_cluster(nb_class,classes_connues,labels) :
     newclass = np.argmax(mat_result_kmeans, axis=0) #n° classes qui sont les plus associées à chaque arbre
     return newclass,mat_result_kmeans
 
-# pourcentage de réussite de kmeans : 
+# pourcentage de réussite de kmeans et purity score: 
 def eval_kmean(nb_class,mat_result_kmeans,newkey): 
-    reussite_kmeans =  mat_result_kmeans[newkey,range(nb_class)]/np.sum(mat_result_kmeans,axis=0)   
-    return reussite_kmeans
+    reussite_kmeans =  mat_result_kmeans[newkey,range(nb_class)]/np.sum(mat_result_kmeans,axis=0)
+    purity = np.sum(mat_result_kmeans[newkey,range(nb_class)])/np.sum(mat_result_kmeans)  
+    return reussite_kmeans,purity
 
 # prédiction des pixels mal classés :
 def predict(mat_pre_classif,kmeans):
@@ -141,9 +142,10 @@ def calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class):
     return rayons
 
 # Implémentation du rejet : On rejette lorsque distance(centre du cluster k, donnée du cluster k) > seuil*(rayon du cluster k)
-def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster): 
+def rejet(T,dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster): 
     # fonction qui crée renvoie les abscisses et ordonnées des pixels rejetés. 
     # On lui rentre en argument les coordonées des pixels non classés qui ne sont pas de l'ombre
+    # T : seuil de rejet à calibrer (se rapporte à 2*sigma ou 3*sigma)
     
     data_non_classee = dataset[:,abs_nonclass,ord_nonclass] #points de dataset qui sont mal classé et non ombre
     distances_to_center = np.zeros((np.shape(data_non_classee))) #lignes = n° du cluster,colonnes = la donnée pour laquelle on calcule la distance au centre du clusteur
@@ -151,8 +153,6 @@ def rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_
                                                                                                    #ligne 1 = distance entre la donnée et le cluster le + proche
     abs_data_rejet = [] #abscisses et ordonnées des data rejetées. 
     ord_data_rejet = []
-    
-    T = 0.9 #seuil de rejet à calibrer (se rapporte à 2*sigma ou 3*sigma)
         
     for i in range(np.shape(abs_nonclass)[0]) : #pour chaque donnée non classée...
         for k in range(nb_class): #...on calcule sa distance au centre de chaque cluster
@@ -173,7 +173,7 @@ def extract_rejet(mat_cluster,path_img,meta,nb_rows,nb_columns,title) :
     abs_data_rejet,ord_data_rejet = np.where(mat_cluster==-2)
     nb_pixels_rejetes = len(abs_data_rejet)
     mat_rejet[abs_data_rejet,ord_data_rejet]=-2
-    FDR.save_img(mat_rejet,path_img,meta,nb_rows,nb_columns)
+    FDR.save_img(mat_rejet,path_img+".img",meta,nb_rows,nb_columns)
     
     ### Plot de la carte de rejet : -------------------------------------------
     cmap2 = colors.ListedColormap(['red','red','white']) # définition map de couleur
@@ -190,7 +190,7 @@ def extract_rejet(mat_cluster,path_img,meta,nb_rows,nb_columns,title) :
     patches = [ mpatches.Patch(color=couleur[i], label= names[i]) for i in range(len(values)) ]
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
-    plt.savefig(path_img, dpi=600, bbox_inches='tight')
+    plt.savefig(path_img+".png", dpi=600, bbox_inches='tight')
     plt.show()
     return mat_rejet,nb_pixels_rejetes
 #*******************************************************************************************************
@@ -213,7 +213,7 @@ def map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_clas
 
 ## fonction pour plot la matrice obtenue (dans les mêmes couleurs pour la matrice des clusters détermniés 
 ## par l'algo et pour la matrice des classes de dataset2)
-def plot_map_matrice(dataset,dic_arbres,nb_class,title):
+def plot_map_matrice(dataset,dic_arbres,nb_class,title,path_img):
     #VERIFIER AVEC QGIS QUE LA LEGENDE EST BIEN ASSOCIEE AUX BONS ARBRES !!  
     
     #pour la légende au graphe :
@@ -250,9 +250,9 @@ def plot_map_matrice(dataset,dic_arbres,nb_class,title):
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
     plt.grid(True)
     if len(np.unique(dataset)) == nb_class+1 : 
-        plt.savefig('Classes_classification.png', dpi=600, bbox_inches='tight')
+        plt.savefig(path_img+'_classification.png', dpi=600, bbox_inches='tight')
     else :
-        plt.savefig('Classes_clustering.png', dpi=600, bbox_inches='tight')
+        plt.savefig(path_img+'_clustering.png', dpi=600, bbox_inches='tight')
     plt.show()
     
 #*******************************************************************************************************
@@ -262,12 +262,10 @@ def plot_map_matrice(dataset,dic_arbres,nb_class,title):
 # labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
 # classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
 # newkey, mat_result_kmeans = map_cluster(nb_class,classes_connues,dic_arbres,labels)
-# reussite_kmeans = eval_kmean(nb_class,mat_result_kmeans,newkey)
+# reussite_kmeans,purity = eval_kmean(nb_class,mat_result_kmeans,newkey)
 
-def test(dataset,dataset2):
-    nb_class = np.shape(dataset)[0] 
-    nb_rows = np.shape(dataset)[1] 
-    nb_columns = np.shape(dataset)[2]
+def test(T,dataset,dataset2,path_img):
+    nb_class,nb_rows,nb_columns = np.shape(dataset)
     val_ombre = -1
     val_rejet = -2
     
@@ -287,43 +285,62 @@ def test(dataset,dataset2):
     kmeans,labels, clusters = apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
     classes_connues = extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
     newclass, mat_result_kmeans = map_cluster(nb_class,classes_connues,labels)
-    reussite_kmeans = eval_kmean(nb_class,mat_result_kmeans,newclass)
+    reussite_kmeans,purity = eval_kmean(nb_class,mat_result_kmeans,newclass)
     
     #### Appel du rejet 
     mat_cluster = matrice_cluster(labels,nb_rows,nb_columns,abs_pixels_classes,ord_pixels_classes)
     mesure = wasserstein
     rayons = calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class)
-    mat_cluster =  rejet(dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
+    mat_cluster =  rejet(T,dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
     mat_cluster = map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class)
     
-    
-    return labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster
-
-#extraction des data
-#petit jeu de données :
-# path_dataset = "./Data/proba_log_reg_l1_extract.tif" #matrice des probas
-# path_dataset2 = "./Data/class_log_reg_l1_extract.tif" #matrice des classes
-
-#gros jeu de données Log_reg_l1
-path_dataset = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img"
-path_dataset2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img"
+    #exportation de l'image résultat en rasterio :
+    FDR.save_img(mat_cluster,path_img+'.img',meta,nb_rows,nb_columns)
+    mat_cluster=0
+    return labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster
 
 
-dataset,meta,dataset2,meta2 = FDR.extract_data(path_dataset, path_dataset2)
+#*******************************************************************************************************
+##### EXTRACTION DES DONNEES :
+#*******************************************************************************************************
+#1. log reg l1
+dataset_path = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img" #matrice des probas pour la méthode logreg
+dataset_path2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img" #matrice des classes pour la méthode logreg
 
-#appel du programme de test
-labels, clusters, mat_result_kmeans, reussite_kmeans,mat_cluster = test(dataset,dataset2)
+# 2. log reg l2
+# dataset_path ="./bonnes_data/none_ite_0_proba_Log_reg_l2combined_mean_proba.img"
+# dataset_path2 = "./bonnes_data/none_ite_0_proba_Log_reg_l2rejection_class.img"
 
-#exportation de l'image résultat en rasterio
-nb_rows = np.shape(dataset)[1] 
-nb_columns = np.shape(dataset)[2] 
-path_img="mat_cluster_lrl1"
-FDR.save_img(mat_cluster,path_img,meta,nb_rows,nb_columns)
+# 3. svm linéaire
+# dataset_path = "./bonnes_data/none_ite_0_proba_SVM_linearcombined_mean_proba.img"#matrice des probas pour la méthode SVM 
+# dataset_path2 = "./bonnes_data/none_ite_0_proba_SVM_linearrejection_class.img" #matrice des classes pour la méthode SVM
+
+# 4. svm rbf
+# dataset_path = "./bonnes_data/none_ite_0_proba_SVM_rbfcombined_mean_proba.img"#matrice des probas pour la méthode SVM 
+# dataset_path2 = "./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img" #matrice des classes pour la méthode SVM
+
+# 5. RF 
+# dataset_path = "./bonnes_data/none_ite_0_proba_RFcombined_mean_proba.img" #matrice des probas pour la méthode logreg
+# dataset_path2 = "./bonnes_data/none_ite_0_proba_RFrejection_class.img" #matrice des classes pour la méthode logreg
+
+dataset,meta,dataset2,meta2 = FDR.extract_data(dataset_path, dataset_path2)
+_,nb_rows,nb_columns = np.shape(dataset)
+#*******************************************************************************************************
+## paramètres actuels (à changer selon les tests) ----------------
+T = 1
+seuil = 'T1'
+nom_algo = 'lrl1'
+#-----------------------------------------------------------------
+# TEST : 
+path_image = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil
+labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster = test(T,dataset,dataset2,path_image)
+
 
 #Tracés des graphiques
 nb_class = np.shape(dataset)[0] 
-plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminiées par l'algorithme de classification svm")
-plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset svm seuil T=0.9")
+plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminées par l'algorithme de classification "+ nom_algo,path_image)
+plot_map_matrice(mat_cluster,dic_arbres,nb_class, "Classes déterminées par Kmeans sur dataset " + nom_algo + " avec un seuil T="+str(T),path_image)
 
-path_rejet="img_rejet_lrl1"
-mat_rejet,nb_pixels_rejetes = extract_rejet(mat_cluster,path_rejet,meta,nb_rows,nb_columns,"rejet kmeans seuil T09")
+#affichage et enregistrement du rejet :
+path_rejet = path_image + 'rejet'
+mat_rejet,nb_pixels_rejetes = extract_rejet(mat_cluster,path_rejet,meta,nb_rows,nb_columns,"rejet kmeans sur le dataset "+nom_algo+ " avec un seuil T="+str(T))
