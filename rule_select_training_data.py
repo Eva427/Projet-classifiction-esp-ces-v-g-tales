@@ -74,7 +74,7 @@ def rule05_ecartProbas (dataset,nb_raws,nb_columns,diff=0) :
     return abs_pixels_classesdiff,ord_pixels_classesdiff
 
 ##### DETERMINATION DES ECHANTILLONS D'ENTRAINEMENT #####################################
-def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
+def info_pre_classif1(dataset,nb_raws,nb_columns,rule,diff=0) :
     #rule sera remplacé par le nom de la fonction dont on choisit la règle
     mat_pre_classif = 2*np.ones((nb_raws,nb_columns)) 
     ##  mat_pre_classif : matrice qui contient des int indiquant le niveau de classification de la matrice d'origine :
@@ -93,6 +93,38 @@ def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
     mat_pre_classif[abs_pixels_ombres, ord_pixels_ombres]=0
     abs_nonclass, ord_nonclass=np.where(mat_pre_classif==2) #coordonnées 
     return mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass
+
+def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
+    #rule sera remplacé par le nom de la fonction dont on choisit la règle
+    mat_pre_classif = 2*np.ones((nb_raws,nb_columns)) 
+    ##  mat_pre_classif : matrice qui contient des int indiquant le niveau de classification de la matrice d'origine :
+        # 0 = pixel d'ombre
+        # 1 = pixel bien classé (avec une proba > 0.5) => va constituer l'échantillon de tests
+        # 2 = pixel mal classé (avec une proba < 0.5) qu'il faudra prédire et polygones
+    # on commence par une matrice remplie de 2 => les pixels mal classés sont ainsi rentrés par défaut
+    #### En fait cette matrice m'a pas servi pour le moment mais elle servira par la suite pour repérer les indices des arbres à prédire je pense
+    
+    #Repérer les indices des pixels bien classés et des zones d'ombres : 
+    abs_pixels_classes, ord_pixels_classes = rule (dataset,nb_raws,nb_columns,diff) #pixels bien classés
+    somme_10mat = np.sum(dataset,axis=0) #somme des 10 matrices de proba => là où la somme fait 0 on a des vecteurs d'ombre
+    abs_pixels_ombres, ord_pixels_ombres = np.where(somme_10mat==0) #pixels d'ombre
+    
+    mat_pre_classif[abs_pixels_classes, ord_pixels_classes]=1
+    mat_pre_classif[abs_pixels_ombres, ord_pixels_ombres]=0
+    abs_nonclass, ord_nonclass=np.where(mat_pre_classif==2) #coordonnées 
+    
+    ### PRISE EN COMPTE DES POLYGONES (SET DE TEST) : 
+    #charge la matrice des polygones M :
+    M=np.loadtxt("M.txt")
+    #repère les indices des polygones et classe ces valeurs comme à prédire (2)
+    abs_poly, ord_poly = np.where(M!=0)
+    mat_pre_classif[abs_poly, ord_poly]=2
+    mat_pre_classif[abs_pixels_ombres, ord_pixels_ombres]=0 #on remet les pixels d'ombre pour ne pas les écraser par les polygones
+    # on met cette ligne en double car au début on avait attribué l'indice 2 à prédire par défaut, là où notre matrice n'est ni
+    # bien classée ni de l'ombre.
+    return mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass
+
+
 
 def mix2data(data1, data2, class1, class2, abs_pixels_ombres, ord_pixels_ombres): #on lui donne la matrice pre classif de chaque méthode et les classes sortantes de chaque méthode, et nous redonne deux vecteurs : 
     #1 avec les indices communs aux deux méabs_pixels_ombres, ord_pixels_ombresthodes considéréss comme bien classés. et un avec les indices parmi les précédents indices dont la classe entre les deux méthodes est la même 
@@ -244,4 +276,4 @@ def info_pre_classifbis_3data(data1, data2, data3, class1, class2, class3,nb_raw
 
 
 # mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass=info_pre_classifbis( datasetrbf, datasetsvm, dataset2rbf, dataset2svm,nb_raws,nb_columns,rule05_ecartProbas) 
-mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass=info_pre_classifbis_3data( datasetrbf, datasetsvm, datasetrf, dataset2svm, dataset2svm,dataset2rbf,nb_raws,nb_columns,rule05_ecartProbas) 
+#mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass=info_pre_classifbis_3data( datasetrbf, datasetsvm, datasetrf, dataset2svm, dataset2svm,dataset2rbf,nb_raws,nb_columns,rule05_ecartProbas) 
