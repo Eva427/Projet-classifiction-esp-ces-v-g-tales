@@ -74,7 +74,8 @@ def rule05_ecartProbas (dataset,nb_raws,nb_columns,diff=0) :
     return abs_pixels_classesdiff,ord_pixels_classesdiff
 
 ##### DETERMINATION DES ECHANTILLONS D'ENTRAINEMENT #####################################
-def info_pre_classif1(dataset,nb_raws,nb_columns,rule,diff=0) :
+### info pré-classif de base 
+def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
     #rule sera remplacé par le nom de la fonction dont on choisit la règle
     mat_pre_classif = 2*np.ones((nb_raws,nb_columns)) 
     ##  mat_pre_classif : matrice qui contient des int indiquant le niveau de classification de la matrice d'origine :
@@ -94,7 +95,8 @@ def info_pre_classif1(dataset,nb_raws,nb_columns,rule,diff=0) :
     abs_nonclass, ord_nonclass=np.where(mat_pre_classif==2) #coordonnées 
     return mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass
 
-def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
+### info_pre_classif prenant en compte les polygones
+def info_pre_classif_poly(dataset,nb_raws,nb_columns,rule,diff=0) :
     #rule sera remplacé par le nom de la fonction dont on choisit la règle
     mat_pre_classif = 2*np.ones((nb_raws,nb_columns)) 
     ##  mat_pre_classif : matrice qui contient des int indiquant le niveau de classification de la matrice d'origine :
@@ -102,7 +104,7 @@ def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
         # 1 = pixel bien classé (avec une proba > 0.5) => va constituer l'échantillon de tests
         # 2 = pixel mal classé (avec une proba < 0.5) qu'il faudra prédire et polygones
     # on commence par une matrice remplie de 2 => les pixels mal classés sont ainsi rentrés par défaut
-    #### En fait cette matrice m'a pas servi pour le moment mais elle servira par la suite pour repérer les indices des arbres à prédire je pense
+
     
     #Repérer les indices des pixels bien classés et des zones d'ombres : 
     abs_pixels_classes, ord_pixels_classes = rule (dataset,nb_raws,nb_columns,diff) #pixels bien classés
@@ -123,8 +125,6 @@ def info_pre_classif(dataset,nb_raws,nb_columns,rule,diff=0) :
     # on met cette ligne en double car au début on avait attribué l'indice 2 à prédire par défaut, là où notre matrice n'est ni
     # bien classée ni de l'ombre.
     return mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres,abs_nonclass, ord_nonclass
-
-
 
 def mix2data(data1, data2, class1, class2, abs_pixels_ombres, ord_pixels_ombres): #on lui donne la matrice pre classif de chaque méthode et les classes sortantes de chaque méthode, et nous redonne deux vecteurs : 
     #1 avec les indices communs aux deux méabs_pixels_ombres, ord_pixels_ombresthodes considéréss comme bien classés. et un avec les indices parmi les précédents indices dont la classe entre les deux méthodes est la même 
