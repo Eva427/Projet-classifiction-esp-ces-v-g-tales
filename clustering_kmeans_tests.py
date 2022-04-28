@@ -121,7 +121,7 @@ def opti_seuil_diff() :
 #*******************************************************************************************************
 ### 2. RECHERCHE DU SEUIL DE REJET T OPTIMAL
 
-def opti_seuil_rejet(num_dataset,num_rule):
+def opti_seuil_rejet(num_dataset,num_rule,diff):
     
     #sélection du jeu de données : 
     dataset,meta,dataset2,meta2 = FDR.extract_data(list_dataset[num_dataset], list_dataset2[num_dataset])
@@ -156,9 +156,12 @@ def opti_seuil_rejet(num_dataset,num_rule):
     #graphique de la classification pour les algos de base
     Km.plot_map_matrice(dataset2[0,:,:],dic_arbres,nb_class,"Classes déterminées par l'algorithme de classification "+ nom_algo + " ("+rule_name+")",path_image)
 
-#test :
-#opti_seuil_rejet(0,0)
-
+#test : avec les sets d'entrainement optimaux
+#opti_seuil_rejet(0,1,0.08) #lrl1
+#opti_seuil_rejet(1,1,0.08) #lrl2
+#opti_seuil_rejet(2,1,0.05) #svm linear
+#opti_seuil_rejet(3,1,0.07) #svm rbf
+opti_seuil_rejet(4,1,0.05) #rf
 #*******************************************************************************************************
 ### 2. EVALUATION DU REJET AVEC LES MASQUES 
 def test_poly(T,rule,diff,dataset,dataset2,path_img,meta):
@@ -326,7 +329,7 @@ def get_coords_a_rejeter(num_dataset_old,num_rule,num_class,diff=0) :
     return abs_inter,ord_inter
 
 
-def eval_rejet_1class(num_dataset_new,num_dataset_old,num_rule,num_class,num_seuil,diff):
+def eval_rejet_1class(num_dataset_new,num_dataset_old,num_rule,num_class,diff):
     #sélection du jeu de données : 
     dataset,meta,dataset2,meta2 = FDR.extract_data(list_dataset_new[num_dataset_new], list_dataset2_new[num_dataset_new])
     nb_class,nb_rows,nb_columns = np.shape(dataset)
@@ -341,29 +344,141 @@ def eval_rejet_1class(num_dataset_new,num_dataset_old,num_rule,num_class,num_seu
     rule = rules[num_rule]
     rule_name = rules_names[num_rule]
     
+    TRR=np.zeros(len(seuils))
+    for num_seuil in range(len(seuils)) :
+        seuil = seuils[num_seuil]
+        T = T_list[num_seuil]
+        path_img = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
+        title = "rejet kmeans sur le dataset "+nom_algo+ " avec un seuil T="+str(T)+" ("+rule_name+")"
+        print(path_img)
         
-    seuil = seuils[num_seuil]
-    T = T_list[num_seuil]
-    path_img = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
-    title = "rejet kmeans sur le dataset "+nom_algo+ " avec un seuil T="+str(T)+" ("+rule_name+")"
-
-    #appel de la fonction test de kmeans :
-    labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = Km.test(T,rule,diff,dataset,dataset2,path_img,meta)
-    Km.plot_map_matrice(mat_cluster,dic_arbres_noplat,nb_class,title,path_img)
-    Km.plot_map_matrice(dataset2[0,:,:],dic_arbres_noplat,nb_class,"Classes déterminées par l'algorithme de classification "+ nom_algo + " ("+rule_name+")",path_img)
+        if num_class == 1 : # pas de platane 
+            dic = dic_arbres_noplat
+        else :
+            dic = dic_arbres_noren
     
-    #calcul des coordonnées à rejeter :
-    abs_inter,ord_inter = get_coords_a_rejeter(num_dataset_old,num_rule,num_class,diff)
-    
-    #2. calcul du true rejected rate :
-    bonrejet = len(np.where(mat_cluster[abs_inter,ord_inter]==-2)[0]) #nombre de pixels bien rejetés
-    TRR = bonrejet/len(abs_inter) #true positive reject = pixels bien rejetés / nombre de pixels que l'on doit rejeter
+        #appel de la fonction test de kmeans :
+        labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = Km.test(T,rule,diff,dataset,dataset2,path_img,meta)
+        Km.plot_map_matrice(mat_cluster,dic,nb_class,title,path_img)
+        Km.plot_map_matrice(dataset2[0,:,:],dic,nb_class,"Classes déterminées par l'algorithme de classification "+ nom_algo + " ("+rule_name+")",path_img)
+        
+        #calcul des coordonnées à rejeter :
+        abs_inter,ord_inter = get_coords_a_rejeter(num_dataset_old,num_rule,num_class,diff)
+        
+        #2. calcul du true rejected rate :
+        bonrejet = len(np.where(mat_cluster[abs_inter,ord_inter]==-2)[0]) #nombre de pixels bien rejetés
+        TRR[num_seuil] = bonrejet/len(abs_inter) #true positive reject = pixels bien rejetés / nombre de pixels que l'on doit rejeter
     return TRR
 
+
+# list_dataset_new = [dataset_path_lrl1_noplat,dataset_path_svmrbf_noplat,dataset_path_lrl1_noren,dataset_path_svmrbf_noren]
+# list_dataset2_new = [dataset_path2_lrl1_noplat,dataset_path2_svmrbf_noplat,dataset_path2_lrl1_noren,dataset_path2_svmrbf_noren]
+
+# list_dataset = [dataset_path_lrl1,dataset_path_lrl2,dataset_path_svml,dataset_path_svmrbf,dataset_path_rf]
+# list_dataset2 = [dataset_path2_lrl1,dataset_path2_lrl2,dataset_path2_svml,dataset_path2_svmrbf,dataset_path2_rf]
+
+'''
+num_dataset_new = 3
+num_dataset_old = 3
+num_rule = 1
+num_class = 15
+#num_seuil = 3
+diff = 0.07
+TRR = eval_rejet_1class(num_dataset_new,num_dataset_old,num_rule,num_class,diff)
+'''
+
+### TEST avec mix2data antre svmrbf et lrl1
+
+def testmix2data(T,rule,diff,dataset,dataset2,path_img,meta):
+    nb_class,nb_rows,nb_columns = np.shape(dataset)
+    val_ombre = -1
+    val_rejet = -2
+    
+    #### Renormalisation des données avant d'appliquer le clustering
+    """
+    # On exclut les pixels d'ombre qui ne sont pas considérés comme des données.
+    datasetR = dataset #copie du dataset pour renormalisation
+    abs_pixels_no_ombre = np.concatenate((abs_pixels_classes,abs_nonclass))
+    ord_pixels_no_ombre = np.concatenate((ord_pixels_classes,ord_nonclass))
+    to_renorm = dataset[:,abs_pixels_no_ombre,ord_pixels_no_ombre]#matrice de taille nb_class x (nb de pixels non ombre) = données à renormaliser
+    to_renorm = preprocessing.normalize(to_renorm, axis=0) #normalisation selon les colonnes de to_renorm
+    datasetR[:,abs_pixels_no_ombre,ord_pixels_no_ombre] = to_renorm #datasetR est maintenant le dataset renormalisé.
+    """
+    
+    #### Appel du clustering :
+    data1,meta1,class1,meta2 = FDR.extract_data(list_dataset[0], list_dataset2[0]) #lrl1
+    data2,meta12,class2,meta22 = FDR.extract_data(list_dataset[3], list_dataset2[3]) #svmrbf
+    mat_pre_classif, abs_pixels_classes, ord_pixels_classes, abs_pixels_ombres, ord_pixels_ombres, abs_nonclass, ord_nonclass = RSTD.info_pre_classifinfo_pre_classifbis(data1, data2, class1, class2,nb_rows,nb_columns,rule,choix=1, diff=0) 
+    kmeans,labels, clusters = Km.apply_kmeans(dataset,nb_class,abs_pixels_classes, ord_pixels_classes)
+    classes_connues = Km.extract_classes_connues(dataset2,abs_pixels_classes, ord_pixels_classes) 
+    newclass, mat_result_kmeans = Km.map_cluster(nb_class,classes_connues,labels)
+    reussite_kmeans,purity = Km.eval_kmean(nb_class,mat_result_kmeans,newclass)
+    
+    #### Appel du rejet 
+    mat_cluster = Km.matrice_cluster(labels,nb_rows,nb_columns,abs_pixels_classes,ord_pixels_classes)
+    mesure = Km.wasserstein
+    rayons = Km.calcul_radius(clusters,dataset,mat_cluster,mesure,nb_class)
+    mat_cluster,n_rejet =  Km.rejet(T,dataset,rayons,clusters,abs_nonclass,ord_nonclass,mesure,nb_class,mat_cluster)
+    mat_cluster = Km.map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class)
+    ratio_rejet = n_rejet/(len(abs_pixels_classes)+len(abs_nonclass)) #ratio de pixels rejetés 
+    #exportation de l'image résultat en rasterio :
+    FDR.save_img(mat_cluster,path_img+'.img',meta,nb_rows,nb_columns)    
+    
+    return labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet, abs_pixels_classes, ord_pixels_classes, abs_nonclass, ord_nonclass
+
+
+def eval_rejet_1class_mix2data(num_dataset_new,num_dataset_old,num_rule,num_class,diff):
+    #sélection du jeu de données : 
+    dataset,meta,dataset2,meta2 = FDR.extract_data(list_dataset_new[num_dataset_new], list_dataset2_new[num_dataset_new])
+    nb_class,nb_rows,nb_columns = np.shape(dataset)
+    
+    #liste des paramètres : 
+    noms_algos_new = ['lrl1_noplat','svmrbf_noplat','lrl1_noren','svmrbf_noren']
+    seuils = ['T06','T07','T08','T09','T1']
+    T_list = [0.6,0.7,0.8,0.9,1]
+    
+    #choix des pramètres : 
+    nom_algo = noms_algos_new[num_dataset_new]
+    rule = rules[num_rule]
+    rule_name = rules_names[num_rule]
+    
+    TRR=np.zeros(len(seuils))
+    for num_seuil in range(len(seuils)) :
+        seuil = seuils[num_seuil]
+        T = T_list[num_seuil]
+        path_img = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
+        title = "rejet kmeans sur le dataset "+nom_algo+ " avec un seuil T="+str(T)+" ("+rule_name+")"
+        print(path_img)
+        
+        if num_class == 1 : # pas de platane 
+            dic = dic_arbres_noplat
+        else :
+            dic = dic_arbres_noren
+    
+        #appel de la fonction test de kmeans :
+        labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = testmix2data(T,rule,diff,dataset,dataset2,path_img,meta)
+        Km.plot_map_matrice(mat_cluster,dic,nb_class,title,path_img)
+        Km.plot_map_matrice(dataset2[0,:,:],dic,nb_class,"Classes déterminées par l'algorithme de classification "+ nom_algo + " ("+rule_name+")",path_img)
+        
+        #calcul des coordonnées à rejeter :
+        abs_inter,ord_inter = get_coords_a_rejeter(num_dataset_old,num_rule,num_class,diff)
+        
+        #2. calcul du true rejected rate :
+        bonrejet = len(np.where(mat_cluster[abs_inter,ord_inter]==-2)[0]) #nombre de pixels bien rejetés
+        TRR[num_seuil] = bonrejet/len(abs_inter) #true positive reject = pixels bien rejetés / nombre de pixels que l'on doit rejeter
+    return TRR
+
+# list_dataset_new = [dataset_path_lrl1_noplat,dataset_path_svmrbf_noplat,dataset_path_lrl1_noren,dataset_path_svmrbf_noren]
+# list_dataset2_new = [dataset_path2_lrl1_noplat,dataset_path2_svmrbf_noplat,dataset_path2_lrl1_noren,dataset_path2_svmrbf_noren]
+
+# list_dataset = [dataset_path_lrl1,dataset_path_lrl2,dataset_path_svml,dataset_path_svmrbf,dataset_path_rf]
+# list_dataset2 = [dataset_path2_lrl1,dataset_path2_lrl2,dataset_path2_svml,dataset_path2_svmrbf,dataset_path2_rf]
+'''
 num_dataset_new = 0
 num_dataset_old = 0
 num_rule = 1
 num_class = 1
-num_seuil = 3
+#num_seuil = 3
 diff = 0.08
-TRR = eval_rejet_1class(num_dataset_new,num_dataset_old,num_rule,num_class,num_seuil,diff)
+TRR = eval_rejet_1class_mix2data(num_dataset_new,num_dataset_old,num_rule,num_class,diff)
+'''
