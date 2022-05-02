@@ -165,12 +165,13 @@ def taux_meme_class_test(matclust, cluster_test):
 
 def compare_masque(mat_cluster) :
     # ATTENTION : c'est uniquement sur la surface des masques qu'on évalue les résultats dans cette fonction. 
-    # on met tout ce qui n'est pas couvert par les masques à 0 dans mat_cluster (comme de l'ombre)
+    # on met tout ce qui n'est pas couvert par les masques à 0 dans mat_cluster (comme de l'ombre) dont on fait la copie 
     M = np.loadtxt("testbis.txt")
+    mat_clusterC = np.copy(mat_cluster)
     abs_Mombre, ord_Mombre = np.where(M ==0) #ombre dans M = tout ce qui n'est pas couvert par les masques
-    mat_cluster[abs_Mombre, ord_Mombre] = 0 #on met l'ombre dans mat_cluster
+    mat_clusterC[abs_Mombre, ord_Mombre] = 0 #on met l'ombre dans mat_cluster
     
-    abs_rejet, ord_rejet = np.where(mat_cluster==-2) #coordonnées des points rejetés par le clustering
+    abs_rejet, ord_rejet = np.where(mat_clusterC==-2) #coordonnées des points rejetés par le clustering
     abs_Mrejet, ord_Mrejet = np.where(M==-2) #coordonnées dans M de la classe à rejeter
     
     #intersection entre les coordonnées des pixels rejetés dans mat_cluster et à rejeter selon M_masque :
@@ -193,7 +194,7 @@ def compare_masque(mat_cluster) :
     Mcopy = np.copy(M)
     Mcopy[abs_Mombre, ord_Mombre] = -3
     Mcopy[abs_Mrejet, ord_Mrejet] = -3
-    bien_classes_pas_rejete = len(np.where(Mcopy==mat_cluster)[0])
+    bien_classes_pas_rejete = len(np.where(Mcopy==mat_clusterC)[0])
     NRA = bien_classes_pas_rejete/pas_a_rejeter
     
     return TRR,FRR,NRA   
