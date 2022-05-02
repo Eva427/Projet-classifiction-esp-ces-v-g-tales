@@ -283,8 +283,8 @@ def test(T,rule,diff,dataset,dataset2,path_img,meta):
 ##### EXTRACTION DES DONNEES :
 #*******************************************************************************************************
 #1. log reg l1
-# dataset_path = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img" #matrice des probas pour la méthode logreg
-# dataset_path2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img" #matrice des classes pour la méthode logreg
+#dataset_path = "./bonnes_data/none_ite_0_proba_Log_reg_l1combined_mean_proba.img" #matrice des probas pour la méthode logreg
+#dataset_path2 = "./bonnes_data/none_ite_0_proba_Log_reg_l1rejection_class.img" #matrice des classes pour la méthode logreg
 
 # 2. log reg l2
 # dataset_path ="./bonnes_data/none_ite_0_proba_Log_reg_l2combined_mean_proba.img"
@@ -299,6 +299,8 @@ def test(T,rule,diff,dataset,dataset2,path_img,meta):
 # dataset_path2 = "./bonnes_data/none_ite_0_proba_SVM_rbfrejection_class.img" #matrice des classes pour la méthode SVM
 
 # 5. RF 
-# dataset_path = "./bonnes_data/none_ite_0_proba_RFcombined_mean_proba.img" #matrice des probas pour la méthode logreg
-# dataset_path2 = "./bonnes_data/none_ite_0_proba_RFrejection_class.img" #matrice des classes pour la méthode logreg
-
+#dataset_path = "./bonnes_data/none_ite_0_proba_RFcombined_mean_proba.img" #matrice des probas pour la méthode logreg
+#dataset_path2 = "./bonnes_data/none_ite_0_proba_RFrejection_class.img" #matrice des classes pour la méthode logreg
+#dataset,meta,dataset2,meta2 = FDR.extract_data(dataset_path, dataset_path2)
+#nb_class,nb_rows,nb_columns = np.shape(dataset)
+#labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = test(T,rule,diff,dataset,dataset2,path_img,meta)

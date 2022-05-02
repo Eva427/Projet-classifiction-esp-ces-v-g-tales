@@ -161,7 +161,7 @@ def opti_seuil_rejet(num_dataset,num_rule,diff):
 #opti_seuil_rejet(1,1,0.08) #lrl2
 #opti_seuil_rejet(2,1,0.05) #svm linear
 #opti_seuil_rejet(3,1,0.07) #svm rbf
-opti_seuil_rejet(4,1,0.05) #rf
+#opti_seuil_rejet(4,1,0.05) #rf
 #*******************************************************************************************************
 ### 2. EVALUATION DU REJET AVEC LES MASQUES 
 def test_poly(T,rule,diff,dataset,dataset2,path_img,meta):
@@ -201,7 +201,7 @@ def test_poly(T,rule,diff,dataset,dataset2,path_img,meta):
 
 
 
-def evaluer_rejet_poly(num_dataset,num_rule):
+def evaluer_rejet_poly2(num_dataset,num_rule):
     #sélection du jeu de données : 
     dataset,meta,dataset2,meta2 = FDR.extract_data(list_dataset[num_dataset], list_dataset2[num_dataset])
     nb_class,nb_rows,nb_columns = np.shape(dataset)
@@ -215,52 +215,107 @@ def evaluer_rejet_poly(num_dataset,num_rule):
     nom_algo = noms_algos[num_dataset]
     rule_name = rules_names[num_rule]
     rule = rules[num_rule]
-    diff = 0.05
+    diff = 0.08
     
-    #listes pour stocker les résultats : 
-    list_percent_meme_predict = np.zeros(len(seuils))
-    list_non_rejected_accuracy = np.zeros(len(seuils))
-    list_TRR = np.zeros(len(seuils))
-    list_FRR = np.zeros(len(seuils))
     
-    for i in range(len(seuils)):
-        seuil = seuils[i]
-        T = T_list[i]
+    seuil = seuils[3]
+    T = T_list[3]
         
-        path_image = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
-    
-        #appel de la fonction test de kmeans :
-        labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = Km.test(T,rule,diff,dataset,dataset2,path_image,meta)
-        
-        #utilisation des masques
-        M=np.loadtxt("testbis.txt")
-        percent_meme_predict,predit_pixels_polys,classes_reelles_polys=MASKS.taux_meme_class_test(mat_cluster,M)
+    path_image = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
 
-        #1. calcul du non-rejected accuracy : 
-        #repérer les indices bien classés et ce qu'il ne faut pas rejeter selon les polygones : 
-        l,count = np.unique(np.concatenate((list(np.where(classes_reelles_polys!=-2)[0]),list(np.where(predit_pixels_polys!=-2)[0]))),return_counts=True)
-        ind = l[count==2] #les indices en communs (autre que le rejet) sont ceux qui apparaissent deux fois dans la liste 
-        bien_classe = len(np.where(classes_reelles_polys[ind]==predit_pixels_polys[ind])[0]) #ces indices communs sont bien classés si on a la même classe dans les deux vecteurs
-        pas_a_rejeter = len(np.where(classes_reelles_polys!=-2)[0]) #pixels pas à rejeter selon les polygones
-        non_rejected_accuracy = bien_classe/pas_a_rejeter
-        
-        #2. calcul du true rejected rate et false rejected rate : 
-        rejetReel = list(np.where(classes_reelles_polys==-2)[0])
-        rejetPredit = list(np.where(predit_pixels_polys==-2)[0])
-        lRejet,countRejet = np.unique(np.concatenate((rejetReel,rejetPredit)),return_counts=True)
-        indRejet = lRejet[countRejet==2] #les indices de rejet en communs sont ceux qui apparaissent deux fois dans la liste => NE VAUT QUE 31 ??? 
-        TRR = len(indRejet)/len(rejetReel) #true positive reject = pixels bien rejetés / nombre de pixels que l'on doit rejeter
-        FRR = (len(rejetPredit)-len(lRejet[countRejet==2]))/len(list(np.where(classes_reelles_polys!=-2)[0]))
-        
-        #stocker les résultats :
-        list_percent_meme_predict[i] = percent_meme_predict
-        list_non_rejected_accuracy[i] = non_rejected_accuracy
-        list_TRR[i] = TRR
-        list_FRR[i] = FRR
-    return list_percent_meme_predict,list_non_rejected_accuracy,list_TRR,list_FRR
+    #appel de la fonction test de kmeans :
+    labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = test_poly(T,rule,diff,dataset,dataset2,path_image,meta)
+    
+    #utilisation des masques
+    M=np.loadtxt("testbis.txt")
+    a, b, c = MASKS.taux_meme_class_test(mat_cluster, M)
+    
+    l, count = np.unique(np.concatenate((list(np.where(b == -2)[0]), list(np.where(c == -2)[0]))), return_counts=True)
+    #np.shape(l[count == 2])
+    TPR = np.shape(l[count == 2])[0]/np.shape(np.where(c == -2))[1]
+    FPR = (np.shape(np.where(b == -2))[1]-np.shape(l[count == 2])[0])/(np.shape(np.where(c != -2))[1])
+    print("il y a au total TPR ", np.shape(l[count == 2])[0]/np.shape(np.where(c == -2))[1])
+    print("il y a au total FPR ", (np.shape(np.where(b == -2))[1]-np.shape(l[count == 2])[0])/np.shape(np.where(c != -2))[1])
+    
+    l,count = np.unique(np.concatenate((list(np.where(c!=-2)[0]),list(np.where(b!=-2)[0]))),return_counts=True)
+    ind = l[count==2] #les indices en communs (autre que le rejet) sont ceux qui apparaissent deux fois dans la liste
+    bien_classe = len(np.where(c[ind]==b[ind])[0]) #ces indices communs sont bien classés si on a la même classe dans les deux vecteurs
+    pas_a_rejeter = len(np.where(c!=-2)[0]) #pixels pas à rejeter selon les polygones
+    non_rejected_accuracy = bien_classe/pas_a_rejeter
+    return non_rejected_accuracy,ratio_rejet,TPR,FPR
+#non_rejected_accuracy,ratio_rejet,TPR,FPR = evaluer_rejet_poly2(0,1)
 
-#test :
-#list_percent_meme_predict,list_non_rejected_accuracy,list_TRR,list_FRR = evaluer_rejet_poly(0,1)
+
+#version où on ne force pas les masques à être dans le set de test : 
+    
+def compare_masque(mat_cluster) :
+    # ATTENTION : c'est uniquement sur la surface des masques qu'on évalue les résultats dans cette fonction. 
+    # on met tout ce qui n'est pas couvert par les masques à 0 dans mat_cluster (comme de l'ombre)
+    M = np.loadtxt("testbis.txt")
+    abs_Mombre, ord_Mombre = np.where(M ==0) #ombre dans M = tout ce qui n'est pas couvert par les masques
+    mat_cluster[abs_Mombre, ord_Mombre] = 0 #on met l'ombre dans mat_cluster
+    
+    abs_rejet, ord_rejet = np.where(mat_cluster==-2) #coordonnées des points rejetés par le clustering
+    abs_Mrejet, ord_Mrejet = np.where(M==-2) #coordonnées dans M de la classe à rejeter
+    
+    #intersection entre les coordonnées des pixels rejetés dans mat_cluster et à rejeter selon M_masque :
+    mat_rejet = np.array([abs_rejet,ord_rejet]).T
+    mat_Mrejet = np.array([abs_Mrejet,ord_Mrejet]).T
+    set_rejet = set([tuple(x) for x in mat_rejet])
+    set_Mrejet = set([tuple(x) for x in mat_Mrejet])
+    inter_rejet = np.array([x for x in set_rejet & set_Mrejet])
+    abs_inter_rejet = inter_rejet[:,0]; ord_inter_rejet = inter_rejet[:,1] #pixels rejetés sur les masques et par notre méthode
+    
+    # 1. true rejected rate = pixels qu'on a bien rejeté / pixels qu'il faut rejeter
+    TRR = len(abs_inter_rejet)/len(abs_Mrejet) 
+    
+    # 2. false rejected rate = pixels qu'on a mal rejeté / pixels qu'il ne faut pas rejeter
+    pas_a_rejeter = abs(np.size(M)-len(abs_Mrejet)-len(abs_Mombre)) #nombre de pixels pas à rejeter (=tout sauf l'ombre et sauf le rejet)
+    FRR = (len(abs_rejet)-len(abs_inter_rejet))/pas_a_rejeter # (pixels rejetés - pixels bien rejetés) / pixels qu'il ne faut pas rejeter
+    
+    # 3. non rejected accuracy = pixels pas à rejeter et bien classés / pixels qu'il ne faut rejeter
+    #on met ce qui est rejet et ombre dans une même catégorie (-3) pour ne pas les compter
+    Mcopy = np.copy(M)
+    Mcopy[abs_Mombre, ord_Mombre] = -3
+    Mcopy[abs_Mrejet, ord_Mrejet] = -3
+    bien_classes_pas_rejete = len(np.where(Mcopy==mat_cluster)[0])
+    NRA = bien_classes_pas_rejete/pas_a_rejeter
+    
+    return TRR,FRR,NRA   
+    
+def evaluer_rejet_poly(num_dataset,num_rule,diff):
+    #sélection du jeu de données : 
+    dataset,meta,dataset2,meta2 = FDR.extract_data(list_dataset[num_dataset], list_dataset2[num_dataset])
+    nb_class,nb_rows,nb_columns = np.shape(dataset)
+    
+    #liste des paramètres : 
+    noms_algos = ['lrl1','lrl2','svmlinear','svmrbf','rf']
+    seuils = ['T06','T07','T08','T09','T1']
+    T_list = [0.6,0.7,0.8,0.9,1]
+    
+    #choix des pramètres : 
+    nom_algo = noms_algos[num_dataset]
+    rule_name = rules_names[num_rule]
+    rule = rules[num_rule]
+    
+    seuil = seuils[3]
+    T = T_list[3]
+        
+    path_image = './resultats_kmeans/'+nom_algo+'/'+nom_algo+seuil+'_'+rule_name
+
+    #appel de la fonction test de kmeans :
+    labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet = Km.test(T,rule,diff,dataset,dataset2,path_image,meta)
+    
+    #utilisation des masques
+    TRR,FRR,NRA = compare_masque(mat_cluster)
+    return TRR,FRR,NRA
+
+#test : avec les sets d'entrainement optimaux
+TRR,FRR,NRA = evaluer_rejet_poly(0,1,0.08) #lrl1
+#TRR,FRR,NRA = evaluer_rejet_poly(1,1,0.08) #lrl2
+#TRR,FRR,NRA  = evaluer_rejet_poly(2,1,0.05) #svm linear
+#TRR,FRR,NRA  = evaluer_rejet_poly(3,1,0.07) #svm rbf
+#TRR,FRR,NRA  = evaluer_rejet_poly(4,1,0.05) #rf
 
 #*******************************************************************************************************
 ### 3. EVALUATION DU REJET EN ENLEVANT les PLATANES (n°1) OU LES RENOUEES (n°15)
@@ -284,9 +339,6 @@ dataset_path2_svmrbf_noren = "./bonnes_data/HS_no_rey_ite_0_class_SVM_rbf.img" #
 
 list_dataset_new = [dataset_path_lrl1_noplat,dataset_path_svmrbf_noplat,dataset_path_lrl1_noren,dataset_path_svmrbf_noren]
 list_dataset2_new = [dataset_path2_lrl1_noplat,dataset_path2_svmrbf_noplat,dataset_path2_lrl1_noren,dataset_path2_svmrbf_noren]
-
-list_dataset = [dataset_path_lrl1,dataset_path_lrl2,dataset_path_svml,dataset_path_svmrbf,dataset_path_rf]
-list_dataset2 = [dataset_path2_lrl1,dataset_path2_lrl2,dataset_path2_svml,dataset_path2_svmrbf,dataset_path2_rf]
 
 
 dic_arbres_noplat = {2: "Saule",
