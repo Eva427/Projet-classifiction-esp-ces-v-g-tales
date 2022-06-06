@@ -274,9 +274,9 @@ def test(T,rule,diff,dataset,dataset2,path_img,meta):
     mat_cluster = map_matrice(mat_cluster,newclass,classes_connues,val_ombre,val_rejet,nb_class)
     ratio_rejet = n_rejet/(len(abs_pixels_classes)+len(abs_nonclass)) #ratio de pixels rejetés 
     #exportation de l'image résultat en rasterio :
-    FDR.save_img(mat_cluster,path_img+'.img',meta,nb_rows,nb_columns)    
+    #FDR.save_img(mat_cluster,path_img+'.img',meta,nb_rows,nb_columns)    
     
-    return labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet
+    return labels, clusters, mat_result_kmeans, reussite_kmeans, purity, mat_cluster, ratio_rejet, mat_pre_classif
 
 
 #*******************************************************************************************************
