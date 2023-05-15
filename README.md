@@ -31,4 +31,3 @@ TO DO LIST :
 - tester plusieurs seuils T sur kmeans 
 - extraire les données du set d'entraînement et les plot
 ------------------------------------------------------------------------------------------------------------------------------------------ 
-Lien vers l'overleaf : https://fr.overleaf.com/4173155583tgsvqjsnwzsj
